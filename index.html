@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>CoWeekend · 周末城市探索指南</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- 顶部栏 -->
+  <header class="topbar">
+    <div class="brand">🧭 CoWeekend</div>
+    <div class="topbar-actions">
+      <button id="btn-city" class="chip">📍 <span id="city-label">上海</span></button>
+      <button id="btn-settings" class="icon-btn" title="偏好设置">⚙️</button>
+    </div>
+  </header>
+
+  <!-- 天气与预算横条 -->
+  <div class="statusbar" id="statusbar">
+    <span id="weather-info">正在获取天气…</span>
+    <span class="dot">·</span>
+    <span id="budget-info">预算 ¥0</span>
+    <span class="dot">·</span>
+    <span id="group-info">单人</span>
+  </div>
+
+  <main id="app">
+
+    <!-- 首页：推荐 -->
+    <section id="view-home" class="view active">
+      <div class="section-head">
+        <h2>本周末为你精选</h2>
+        <button id="btn-refresh" class="link-btn">🔄 换一批</button>
+      </div>
+      <div id="feed" class="feed"></div>
+      <div id="feed-empty" class="empty-state" hidden>
+        <p>暂时没有更多推荐了，去「⚙️ 偏好设置」调整一下兴趣或预算试试～</p>
+      </div>
+    </section>
+
+    <!-- 组局 -->
+    <section id="view-group" class="view">
+      <div class="section-head">
+        <h2>组局</h2>
+      </div>
+      <div class="subtabs">
+        <button class="subtab active" data-sub="mine">我的局</button>
+        <button class="subtab" data-sub="square">搭子广场</button>
+      </div>
+      <div id="group-mine" class="list"></div>
+      <div id="group-square" class="list" hidden></div>
+    </section>
+
+    <!-- 足迹 -->
+    <section id="view-trace" class="view">
+      <div class="section-head">
+        <h2>足迹</h2>
+        <button id="btn-checkin" class="link-btn">＋ 打卡</button>
+      </div>
+      <div id="trace-summary" class="trace-summary"></div>
+      <div id="trace-list" class="list"></div>
+    </section>
+
+    <!-- 攻略 -->
+    <section id="view-guide" class="view">
+      <div class="section-head">
+        <h2>攻略</h2>
+        <button id="btn-new-guide" class="link-btn">＋ 写攻略</button>
+      </div>
+      <div class="subtabs">
+        <button class="subtab active" data-sub="square">攻略广场</button>
+        <button class="subtab" data-sub="mine">我的攻略</button>
+      </div>
+      <div id="guide-square" class="list"></div>
+      <div id="guide-mine" class="list" hidden></div>
+    </section>
+
+  </main>
+
+  <!-- 底部导航 -->
+  <nav class="tabbar">
+    <button class="tab active" data-view="home"><span>🏠</span>首页</button>
+    <button class="tab" data-view="group"><span>🤝</span>组局</button>
+    <button class="tab" data-view="trace"><span>🧭</span>足迹</button>
+    <button class="tab" data-view="guide"><span>📖</span>攻略</button>
+  </nav>
+
+  <!-- ===== 弹层：偏好设置 / 首次引导 ===== -->
+  <div id="modal-settings" class="modal">
+    <div class="modal-card">
+      <h3>我的偏好</h3>
+      <label>昵称</label>
+      <input id="set-name" type="text" placeholder="怎么称呼你" />
+
+      <label>常去城市</label>
+      <input id="set-city" type="text" placeholder="例如：上海" />
+
+      <label>兴趣标签（可多选）</label>
+      <div id="set-tags" class="tag-group"></div>
+
+      <label>人均预算上限：<span id="set-budget-val">150</span> 元</label>
+      <input id="set-budget" type="range" min="0" max="500" step="10" value="150" />
+
+      <label>常见同行人数</label>
+      <div class="tag-group" id="set-group">
+        <button data-val="solo" class="tag-btn">单人</button>
+        <button data-val="small" class="tag-btn">2-3人</button>
+        <button data-val="large" class="tag-btn">4人以上</button>
+      </div>
+
+      <div class="modal-actions">
+        <button id="set-save" class="btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 弹层：发起局 ===== -->
+  <div id="modal-plan" class="modal">
+    <div class="modal-card">
+      <h3>发起周末局</h3>
+      <input type="hidden" id="plan-activity-id" />
+      <p id="plan-activity-title" class="muted"></p>
+      <label>出发时间</label>
+      <input id="plan-time" type="datetime-local" />
+      <label>人数上限</label>
+      <input id="plan-maxpeople" type="number" min="2" max="20" value="4" />
+      <label>费用方式</label>
+      <select id="plan-cost-mode">
+        <option value="aa">AA 制</option>
+        <option value="full">我全包</option>
+      </select>
+      <label class="checkbox-row"><input id="plan-public" type="checkbox" checked /> 公开到搭子广场</label>
+      <div class="modal-actions">
+        <button id="plan-cancel" class="btn-ghost">取消</button>
+        <button id="plan-save" class="btn-primary">生成邀请</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 弹层：打卡 ===== -->
+  <div id="modal-checkin" class="modal">
+    <div class="modal-card">
+      <h3>打卡记录</h3>
+      <label>这次去了哪里</label>
+      <input id="ci-title" type="text" placeholder="活动/地点名称" />
+      <label>照片（本地演示，仅存在你的浏览器里）</label>
+      <input id="ci-photo" type="file" accept="image/*" />
+      <img id="ci-photo-preview" class="photo-preview" hidden />
+      <label>花费（人均，元）</label>
+      <input id="ci-cost" type="number" min="0" value="0" />
+      <label>体验评分</label>
+      <div class="stars" id="ci-rating">
+        <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+      </div>
+      <label>感受</label>
+      <textarea id="ci-note" rows="3" placeholder="随便写点什么…"></textarea>
+      <div class="modal-actions">
+        <button id="ci-cancel" class="btn-ghost">取消</button>
+        <button id="ci-save" class="btn-primary">保存打卡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 弹层：攻略编辑 ===== -->
+  <div id="modal-guide" class="modal">
+    <div class="modal-card">
+      <h3 id="guide-modal-title">写攻略</h3>
+      <input type="hidden" id="guide-id" />
+      <label>标题</label>
+      <input id="guide-title" type="text" placeholder="例如：人均100的雨天室内半日游" />
+      <label>适合人群</label>
+      <input id="guide-audience" type="text" placeholder="例如：情侣 / 3-4人小队 / 一人食" />
+      <label>预算（人均，元）</label>
+      <input id="guide-budget" type="number" min="0" value="0" />
+      <label>行程安排（每行一步）</label>
+      <textarea id="guide-steps" rows="5" placeholder="10:00 到达xxx&#10;12:00 午饭&#10;14:00 xxx市集"></textarea>
+      <label>避坑提示</label>
+      <textarea id="guide-tips" rows="2"></textarea>
+      <label class="checkbox-row"><input id="guide-publish" type="checkbox" checked /> 发布到攻略广场</label>
+      <div class="modal-actions">
+        <button id="guide-cancel" class="btn-ghost">取消</button>
+        <button id="guide-save" class="btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
